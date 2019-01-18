@@ -40,6 +40,7 @@ private slots:
     void selectDirectory();
     void handleDirectory();
     void confirmThreadCount();
+    void cancelHashing();
 
 private:
     Ui::MainWindow *ui;
@@ -50,7 +51,7 @@ private:
     QMap<QPair<quint64, QByteArray>, QString> hashedFiles;
     QMap<QPair<quint64, QByteArray>, QTreeWidgetItem*> treePlacement;
     QFutureWatcher<void> hashingWatcher;
-    bool hashingInProgress, currentDirectoryScanned;
+    bool hashingInProgress, currentDirectoryScanned, hashingCancelled;
 
     const qint64 BLOCK_SIZE = (1 << 12);
 };

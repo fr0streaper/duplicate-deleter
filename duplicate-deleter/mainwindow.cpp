@@ -20,6 +20,7 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
     , currentDirectoryScanned(false)
     , hashingInProgress(false)
+    , hashingCancelled(false)
     , filesHashed(0)
 {
     ui->setupUi(this);
@@ -171,6 +172,10 @@ QByteArray MainWindow::hashFile(QFile &file)
     for (qint64 i = 0; i < blockCount; ++i)
     {
         hasher.addData(file.read(BLOCK_SIZE));
+        if (hashingCancelled)
+        {
+            return QByteArray();
+        }
     }
 
     file.close();
@@ -185,6 +190,12 @@ void MainWindow::hashFileBundle(QVector<QString> &filePaths)
     {
         QFile currentFile(currentDirectory + "/" + filePath);
         QByteArray fileHash = hashFile(currentFile);
+
+        if (hashingCancelled)
+        {
+            return;
+        }
+
         fileHashes.push_back({ currentFile.size(), fileHash });
         if (hashingMutex.try_lock())
         {
@@ -224,6 +235,7 @@ void MainWindow::selectDirectory()
     hashedFiles.clear();
     treePlacement.clear();
     currentDirectoryScanned = false;
+    hashingCancelled = false;
 }
 
 void MainWindow::handleDirectory()
@@ -236,6 +248,11 @@ void MainWindow::handleDirectory()
     {
         scanDirectory();
     }
+}
+
+void MainWindow::cancelHashing()
+{
+    hashingCancelled = true;
 }
 
 void MainWindow::deleteSelected()
@@ -337,6 +354,7 @@ void MainWindow::scanDirectory()
     connect(&hashingWatcher, SIGNAL(progressValueChanged(int)), &progressBar, SLOT(setValue(int)));
     connect(&progressBar, SIGNAL(canceled()), &hashingWatcher, SLOT(cancel()));
     connect(&hashingWatcher, SIGNAL(finished()), &progressBar, SLOT(reset()));
+    connect(&progressBar, SIGNAL(canceled()), this, SLOT(cancelHashing()));
 
     hashingWatcher.setFuture(QtConcurrent::map(distribution, [this](QVector<QString> &paths) { hashFileBundle(paths); } ));
     progressBar.exec();
