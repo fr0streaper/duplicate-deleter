@@ -1,0 +1,4 @@
+string-finder/
+build-string-finder-ext3-Debug/
+build-string-finder-ext3-Release/
+.gitignore

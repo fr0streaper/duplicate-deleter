@@ -225,6 +225,11 @@ void MainWindow::selectDirectory()
 {
     currentDirectory = QFileDialog::getExistingDirectory(this, "Select Directory for Scanning",
                                                     QString(), QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+    if (!QDir(currentDirectory).exists())
+    {
+        QMessageBox::critical(this, "Duplicate deleter", "Chosen directory cannot be opened");
+        return;
+    }
     ui->directory_linedit->setText(currentDirectory);
     ui->directory_button->setDisabled(false);
     ui->handle_button->setText("Scan directory for duplicates");
